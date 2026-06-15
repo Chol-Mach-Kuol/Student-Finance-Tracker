@@ -1,0 +1,137 @@
+[
+  {
+    "id": "txn_0001",
+    "description": "Lunch at cafeteria",
+    "amount": 8.50,
+    "category": "Food",
+    "date": "2026-06-05",
+    "createdAt": "2026-06-05T11:32:00.000Z",
+    "updatedAt": "2026-06-05T11:32:00.000Z"
+  },
+  {
+    "id": "txn_0002",
+    "description": "Bus pass monthly",
+    "amount": 45.00,
+    "category": "Transport",
+    "date": "2026-06-01",
+    "createdAt": "2026-06-01T09:00:00.000Z",
+    "updatedAt": "2026-06-01T09:00:00.000Z"
+  },
+  {
+    "id": "txn_0003",
+    "description": "Calculus textbook",
+    "amount": 62.99,
+    "category": "Education",
+    "date": "2026-06-02",
+    "createdAt": "2026-06-02T14:10:00.000Z",
+    "updatedAt": "2026-06-02T14:10:00.000Z"
+  },
+  {
+    "id": "txn_0004",
+    "description": "Coffee at library",
+    "amount": 3.75,
+    "category": "Food",
+    "date": "2026-06-06",
+    "createdAt": "2026-06-06T08:45:00.000Z",
+    "updatedAt": "2026-06-06T08:45:00.000Z"
+  },
+  {
+    "id": "txn_0005",
+    "description": "Cinema ticket",
+    "amount": 12.00,
+    "category": "Entertainment",
+    "date": "2026-06-07",
+    "createdAt": "2026-06-07T19:00:00.000Z",
+    "updatedAt": "2026-06-07T19:00:00.000Z"
+  },
+  {
+    "id": "txn_0006",
+    "description": "Pharmacy prescription",
+    "amount": 15.40,
+    "category": "Health",
+    "date": "2026-06-03",
+    "createdAt": "2026-06-03T16:20:00.000Z",
+    "updatedAt": "2026-06-03T16:20:00.000Z"
+  },
+  {
+    "id": "txn_0007",
+    "description": "Grocery shopping",
+    "amount": 34.20,
+    "category": "Food",
+    "date": "2026-06-08",
+    "createdAt": "2026-06-08T17:35:00.000Z",
+    "updatedAt": "2026-06-08T17:35:00.000Z"
+  },
+  {
+    "id": "txn_0008",
+    "description": "Uber ride to campus",
+    "amount": 9.80,
+    "category": "Transport",
+    "date": "2026-06-09",
+    "createdAt": "2026-06-09T07:50:00.000Z",
+    "updatedAt": "2026-06-09T07:50:00.000Z"
+  },
+  {
+    "id": "txn_0009",
+    "description": "Spotify subscription",
+    "amount": 5.99,
+    "category": "Entertainment",
+    "date": "2026-06-10",
+    "createdAt": "2026-06-10T00:00:00.000Z",
+    "updatedAt": "2026-06-10T00:00:00.000Z"
+  },
+  {
+    "id": "txn_0010",
+    "description": "Printing lecture notes",
+    "amount": 2.00,
+    "category": "Education",
+    "date": "2026-06-10",
+    "createdAt": "2026-06-10T10:15:00.000Z",
+    "updatedAt": "2026-06-10T10:15:00.000Z"
+  },
+  {
+    "id": "txn_0011",
+    "description": "Health-Care clinic visit",
+    "amount": 0,
+    "category": "Health",
+    "date": "2026-06-04",
+    "createdAt": "2026-06-04T13:00:00.000Z",
+    "updatedAt": "2026-06-04T13:00:00.000Z"
+  },
+  {
+    "id": "txn_0012",
+    "description": "Tea and snacks",
+    "amount": 4.50,
+    "category": "Food",
+    "date": "2026-06-11",
+    "createdAt": "2026-06-11T15:00:00.000Z",
+    "updatedAt": "2026-06-11T15:00:00.000Z"
+  },
+  {
+    "id": "txn_0013",
+    "description": "Photocopy one page",
+    "amount": 0.05,
+    "category": "Education",
+    "date": "2026-05-15",
+    "createdAt": "2026-05-15T09:00:00.000Z",
+    "updatedAt": "2026-05-15T09:00:00.000Z"
+  },
+  {
+    "id": "txn_0014",
+    "description": "Semester registration fees",
+    "amount": 850.00,
+    "category": "Other",
+    "date": "2026-05-01",
+    "createdAt": "2026-05-01T08:00:00.000Z",
+    "updatedAt": "2026-05-01T08:00:00.000Z"
+  },
+  {
+    "id": "txn_0015",
+    "description": "Coffee coffee morning deal",
+    "amount": 2.99,
+    "category": "Food",
+    "date": "2026-04-30",
+    "createdAt": "2026-04-30T07:30:00.000Z",
+    "updatedAt": "2026-04-30T07:30:00.000Z"
+  }
+]
