@@ -2,7 +2,7 @@
 
 A simple expense tracker I built for my web dev assignment. You log what you spend, set a monthly cap, and search through your records. Everything stays in your browser — no backend, no account needed.
 
-Live site: https://c-chol1.github.io/ledger/
+Live site: https://chol-mach-kuol.github.io/Student-Finance-Tracker/
 
 ---
 
