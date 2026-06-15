@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ledger — Test Suite</title>
+  <link rel="stylesheet" href="styles/styles.css" />
+  <style>
+    body { padding: 24px; max-width: 760px; margin: 0 auto; }
+    .suite { margin-top: 28px; }
+    .suite h2 { font-size: 1.1rem; color: var(--muted); margin-bottom: 10px; }
+    .result { padding: 8px 14px; border-radius: 8px; margin: 4px 0; font-family: var(--font-mono); font-size: 0.9rem; }
+    .pass { background: #d1fae5; color: #065f46; }
+    .fail { background: #fee2e2; color: #7f1d1d; }
+    #summary { margin-top: 28px; font-weight: 700; font-size: 1.15rem; }
+    #summary.all-pass { color: var(--pos); }
+    #summary.has-fail { color: var(--neg); }
+  </style>
+</head>
+<body>
+  <h1>Ledger — Test Suite</h1>
+  <p>Runs in the browser over HTTP. Each row is one assertion.</p>
+  <div id="output"></div>
+  <p id="summary"></p>
+
+  <script type="module">
+    import { RULES, validateField, validateRecord, getWarnings } from "./scripts/validators.js";
+    import { compileRegex, filterRecords, highlight } from "./scripts/search.js";
+    import { importJSON, exportJSON } from "./scripts/storage.js";
+    import { init, add, update, remove, getAll, getById, total, topCategory, sortRecords } from "./scripts/state.js";
+
+    const out = document.getElementById("output");
+    let passed = 0, failed = 0;
+
+    function section(title) {
+      const h = document.createElement("h2");
+      h.className = "suite";
+      h.textContent = title;
+      out.appendChild(h);
+    }
+
+    function assert(label, actual, expected) {
+      const ok = actual === expected;
+      const div = document.createElement("div");
+      div.className = `result ${ok ? "pass" : "fail"}`;
+      div.textContent = ok
+        ? `PASS  ${label}`
+        : `FAIL  ${label} — got ${JSON.stringify(actual)}, expected ${JSON.stringify(expected)}`;
+      out.appendChild(div);
+      if (ok) passed++; else failed++;
+      if (!ok) console.error(`FAIL: ${label}`, { actual, expected });
+    }
+
+    function assertTrue(label, value) { assert(label, !!value, true); }
+    function assertFalse(label, value) { assert(label, !!value, false); }
+
+    // ================================================================
+    section("Regex rules — RULES object");
+    // ================================================================
+
+    // Rule 1: description no leading/trailing space
+    assertTrue("RULES.description matches 'Lunch at cafe'", RULES.description.test("Lunch at cafe"));
+    assertFalse("RULES.description rejects ' leading'", RULES.description.test(" leading"));
+    assertFalse("RULES.description rejects 'trailing '", RULES.description.test("trailing "));
+    assertTrue("RULES.description matches single char 'X'", RULES.description.test("X"));
+
+    // Rule 2: double space
+    assertTrue("RULES.doubleSpace detects double space", RULES.doubleSpace.test("a  b"));
+    assertFalse("RULES.doubleSpace passes single space", RULES.doubleSpace.test("a b"));
+
+    // Rule 3: amount
+    assertTrue("RULES.amount matches '0'", RULES.amount.test("0"));
+    assertTrue("RULES.amount matches '12.5'", RULES.amount.test("12.5"));
+    assertTrue("RULES.amount matches '1249.00'", RULES.amount.test("1249.00"));
+    assertFalse("RULES.amount rejects '01.5' (leading zero)", RULES.amount.test("01.5"));
+    assertFalse("RULES.amount rejects '12.999' (3 decimals)", RULES.amount.test("12.999"));
+    assertFalse("RULES.amount rejects '-5'", RULES.amount.test("-5"));
+
+    // Rule 4: date
+    assertTrue("RULES.date matches '2025-09-29'", RULES.date.test("2025-09-29"));
+    assertFalse("RULES.date rejects '2025-13-01'", RULES.date.test("2025-13-01"));
+    assertFalse("RULES.date rejects '2025-9-5' (no padding)", RULES.date.test("2025-9-5"));
+
+    // Rule 5: category
+    assertTrue("RULES.category matches 'Food'", RULES.category.test("Food"));
+    assertTrue("RULES.category matches 'Health-Care'", RULES.category.test("Health-Care"));
+    assertFalse("RULES.category rejects 'Food2'", RULES.category.test("Food2"));
+    assertFalse("RULES.category rejects '-Food'", RULES.category.test("-Food"));
+
+    // Rule 6: duplicate word back-reference (ADVANCED)
+    assertTrue("RULES.duplicateWord matches 'the the'", RULES.duplicateWord.test("the the"));
+    assertTrue("RULES.duplicateWord matches 'go go power'", RULES.duplicateWord.test("go go power"));
+    assertFalse("RULES.duplicateWord rejects 'the then'", RULES.duplicateWord.test("the then"));
+    assertFalse("RULES.duplicateWord rejects 'hello world'", RULES.duplicateWord.test("hello world"));
+
+    // ================================================================
+    section("validateField — individual field rules");
+    // ================================================================
+
+    assert("validateField description ok", validateField("description", "Lunch"), "");
+    assertTrue("validateField description leading space → error", validateField("description", " bad") !== "");
+    assertTrue("validateField description double space → error", validateField("description", "a  b") !== "");
+    assertTrue("validateField description >80 chars → error", validateField("description", "x".repeat(81)) !== "");
+    assert("validateField amount ok", validateField("amount", "12.50"), "");
+    assertTrue("validateField amount bad → error", validateField("amount", "abc") !== "");
+    assert("validateField date ok", validateField("date", "2025-06-15"), "");
+    assertTrue("validateField date Feb 30 → error", validateField("date", "2025-02-30") !== "");
+    assertTrue("validateField date bad month → error", validateField("date", "2025-13-01") !== "");
+    assert("validateField category ok", validateField("category", "Food"), "");
+    assertTrue("validateField category digit → error", validateField("category", "Food2") !== "");
+
+    // ================================================================
+    section("getWarnings — duplicate-word (non-blocking)");
+    // ================================================================
+
+    const warnResult = getWarnings({ description: "buy buy tickets" });
+    assertTrue("getWarnings fires on 'buy buy tickets'", !!warnResult.description);
+    const noWarn = getWarnings({ description: "buy tickets" });
+    assertFalse("getWarnings silent on 'buy tickets'", !!noWarn.description);
+
+    // ================================================================
+    section("compileRegex — safe compiler");
+    // ================================================================
+
+    const { regex: r1, error: e1 } = compileRegex("coffee");
+    assertTrue("compileRegex('coffee') → regex not null", r1 !== null);
+    assert("compileRegex('coffee') → no error", e1, "");
+
+    const { regex: r2, error: e2 } = compileRegex("[");
+    assert("compileRegex('[') → regex is null", r2, null);
+    assertTrue("compileRegex('[') → error message present", e2.length > 0);
+
+    const { regex: r3 } = compileRegex("");
+    assert("compileRegex('') → regex is null (blank)", r3, null);
+
+    const { regex: r4 } = compileRegex("FOOD", { caseInsensitive: true });
+    assertTrue("compileRegex case-insensitive matches 'food'", r4.test("food"));
+
+    const { regex: r5 } = compileRegex("FOOD", { caseInsensitive: false });
+    assertFalse("compileRegex case-sensitive rejects 'food'", r5.test("food"));
+
+    // ================================================================
+    section("highlight — HTML escaping and marking");
+    // ================================================================
+
+    const { regex: hr } = compileRegex("coffee");
+    assert(
+      "highlight wraps match in <mark>",
+      highlight("morning coffee", hr),
+      "morning <mark>coffee</mark>"
+    );
+    assert(
+      "highlight escapes < in plain text",
+      highlight("a<b", null),
+      "a&lt;b"
+    );
+    assert(
+      "highlight escapes & before matching",
+      highlight("a&b", null),
+      "a&amp;b"
+    );
+    assert(
+      "highlight returns safe text when regex is null",
+      highlight("no match", null),
+      "no match"
+    );
+
+    // ================================================================
+    section("filterRecords");
+    // ================================================================
+
+    const recs = [
+      { id: "1", description: "Coffee at library", category: "Food", date: "2026-06-01", amount: 3.75 },
+      { id: "2", description: "Bus pass", category: "Transport", date: "2026-06-02", amount: 45 },
+    ];
+    const { regex: fr } = compileRegex("coffee");
+    assert("filterRecords finds matching record", filterRecords(recs, fr).length, 1);
+    assert("filterRecords returns all when regex is null", filterRecords(recs, null).length, 2);
+    const { regex: noMatch } = compileRegex("xyz999");
+    assert("filterRecords returns empty when no match", filterRecords(recs, noMatch).length, 0);
+
+    // ================================================================
+    section("importJSON — validated import");
+    // ================================================================
+
+    const good = JSON.stringify([{
+      id: "txn_0001", description: "Test", amount: 5.00,
+      category: "Food", date: "2026-01-01",
+      createdAt: "2026-01-01T00:00:00.000Z", updatedAt: "2026-01-01T00:00:00.000Z"
+    }]);
+    const goodResult = importJSON(good);
+    assert("importJSON valid → ok true", goodResult.ok, true);
+    assert("importJSON valid → data length 1", goodResult.data.length, 1);
+
+    const badJSON = importJSON("not json at all {{{");
+    assert("importJSON bad JSON → ok false", badJSON.ok, false);
+    assertTrue("importJSON bad JSON → error message", badJSON.error.length > 0);
+
+    const notArray = importJSON(JSON.stringify({ id: "txn_0001" }));
+    assert("importJSON object (not array) → ok false", notArray.ok, false);
+
+    const missingField = importJSON(JSON.stringify([{ id: "txn_0001", description: "X" }]));
+    assert("importJSON missing fields → ok false", missingField.ok, false);
+
+    const dupIds = JSON.stringify([
+      { id: "txn_0001", description: "A", amount: 1, category: "Food", date: "2026-01-01" },
+      { id: "txn_0001", description: "B", amount: 2, category: "Food", date: "2026-01-02" },
+    ]);
+    assert("importJSON duplicate IDs → ok false", importJSON(dupIds).ok, false);
+
+    // ================================================================
+    section("State — CRUD and stats");
+    // ================================================================
+
+    init([]);
+    assert("init starts with empty array", getAll().length, 0);
+
+    const a = add({ description: "Lunch", amount: 8.5, category: "Food", date: "2026-06-10" });
+    assert("add increments count to 1", getAll().length, 1);
+    assert("add returns record with correct description", a.description, "Lunch");
+    assertTrue("add assigns txn_ id", a.id.startsWith("txn_"));
+
+    const b = add({ description: "Bus", amount: 3, category: "Transport", date: "2026-06-10" });
+    assert("second add → count 2", getAll().length, 2);
+    assert("total sums amounts", total(), 11.5);
+    assert("topCategory returns highest-spend category", topCategory(), "Food");
+
+    update(a.id, { amount: 10 });
+    assert("update changes amount", getById(a.id).amount, 10);
+    assert("total reflects update", total(), 13);
+
+    remove(b.id);
+    assert("remove reduces count", getAll().length, 1);
+    assert("remove returns true", remove("nonexistent"), false);
+
+    // sortRecords
+    init([]);
+    add({ description: "B entry", amount: 20, category: "Food", date: "2026-06-02" });
+    add({ description: "A entry", amount: 5, category: "Food", date: "2026-06-01" });
+    const byDesc = sortRecords(getAll(), "description", "asc");
+    assert("sortRecords asc by description", byDesc[0].description, "A entry");
+    const byAmt = sortRecords(getAll(), "amount", "desc");
+    assert("sortRecords desc by amount", byAmt[0].amount, 20);
+
+    // ================================================================
+    // Summary
+    // ================================================================
+    const summary = document.getElementById("summary");
+    const total_tests = passed + failed;
+    summary.textContent = `${passed} / ${total_tests} passed${failed ? ` — ${failed} FAILED` : " — all green"}`;
+    summary.className = failed ? "has-fail" : "all-pass";
+    console.log(`Tests: ${passed}/${total_tests} passed`);
+  </script>
+</body>
+</html>
