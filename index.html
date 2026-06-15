@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ledger — Student Finance Tracker</title>
+  <meta name="description" content="A mobile-first, accessible student expense tracker built in vanilla HTML, CSS, and JavaScript." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles/styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand__mark" aria-hidden="true">₵</span>
+      <h1 class="brand__name">Ledger</h1>
+    </div>
+    <button id="cta-add" class="btn btn--primary">+ Add entry</button>
+  </header>
+
+  <div class="shell">
+    <nav class="nav" aria-label="Primary">
+      <button class="nav__link" data-target="dashboard" aria-current="false">Dashboard</button>
+      <button class="nav__link" data-target="records" aria-current="false">Records</button>
+      <button class="nav__link" data-target="form" aria-current="false">Add / Edit</button>
+      <button class="nav__link" data-target="settings" aria-current="false">Settings</button>
+      <button class="nav__link" data-target="about" aria-current="false">About</button>
+    </nav>
+
+    <main id="main" class="main" tabindex="-1">
+
+      <!-- DASHBOARD -->
+      <section id="dashboard" class="section" aria-labelledby="dashboard-h">
+        <h2 id="dashboard-h" tabindex="-1">Dashboard</h2>
+
+        <div class="stat-grid">
+          <article class="stat">
+            <p class="stat__label">Records</p>
+            <p class="stat__value" id="stat-count">0</p>
+          </article>
+          <article class="stat">
+            <p class="stat__label">Total spent</p>
+            <p class="stat__value num" id="stat-total">—</p>
+          </article>
+          <article class="stat">
+            <p class="stat__label">Top category</p>
+            <p class="stat__value" id="stat-top">—</p>
+          </article>
+        </div>
+
+        <article class="panel cap">
+          <div class="cap__head">
+            <h3>Spending cap</h3>
+            <div class="field field--inline">
+              <label for="cap-input">Cap</label>
+              <input id="cap-input" type="text" inputmode="decimal" class="num" />
+            </div>
+          </div>
+          <div class="meter" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Share of cap used">
+            <div class="meter__fill" id="cap-fill" data-level="under"></div>
+          </div>
+          <p class="cap__status" id="cap-status" role="status" aria-live="polite"></p>
+        </article>
+
+        <article class="panel">
+          <h3>Last 7 days</h3>
+          <div class="chart" id="chart" role="img" aria-label="Spending over the last 7 days."></div>
+        </article>
+      </section>
+
+      <!-- RECORDS -->
+      <section id="records" class="section" aria-labelledby="records-h" hidden>
+        <h2 id="records-h" tabindex="-1">Records</h2>
+
+        <div class="toolbar">
+          <div class="field field--grow">
+            <label for="search-input">Search (regex)</label>
+            <div class="search-wrap">
+              <input id="search-input" type="text" placeholder="e.g. (coffee|tea)  or  \b(\w+)\s+\1\b"
+                     autocomplete="off" spellcheck="false" aria-describedby="search-error" />
+              <button id="search-clear" class="btn btn--ghost" type="button">Clear</button>
+            </div>
+            <p id="search-error" class="field__error" role="status" aria-live="polite"></p>
+          </div>
+
+          <div class="field field--check">
+            <input id="search-flag" type="checkbox" checked />
+            <label for="search-flag">Ignore case</label>
+          </div>
+
+          <div class="field">
+            <label for="display-currency-records">Show in</label>
+            <select id="display-currency-records"></select>
+          </div>
+        </div>
+
+        <p id="result-count" class="result-count" role="status" aria-live="polite">0 records</p>
+
+        <table id="records-table" class="records">
+          <thead>
+            <tr>
+              <th scope="col" data-sort="date" aria-sort="none"><button type="button">Date</button></th>
+              <th scope="col" data-sort="description" aria-sort="none"><button type="button">Description</button></th>
+              <th scope="col">Category</th>
+              <th scope="col" data-sort="amount" aria-sort="none" class="num"><button type="button">Amount</button></th>
+              <th scope="col">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="records-body"></tbody>
+        </table>
+        <p id="records-empty" class="empty" hidden></p>
+      </section>
+
+      <!-- ADD / EDIT FORM -->
+      <section id="form" class="section" aria-labelledby="form-title" hidden>
+        <h2 id="form-title" tabindex="-1">Add entry</h2>
+
+        <form id="entry-form" class="entry-form" novalidate>
+          <input type="hidden" id="f-id" />
+
+          <div class="field">
+            <label for="f-description">Description</label>
+            <input id="f-description" type="text" autocomplete="off" required aria-describedby="e-description w-description" />
+            <p id="e-description" class="field__error" role="alert"></p>
+            <p id="w-description" class="field__warn"></p>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="f-amount">Amount</label>
+              <input id="f-amount" type="text" inputmode="decimal" class="num" required aria-describedby="e-amount" />
+              <p id="e-amount" class="field__error" role="alert"></p>
+            </div>
+            <div class="field">
+              <label for="f-date">Date</label>
+              <input id="f-date" type="date" required aria-describedby="e-date" />
+              <p id="e-date" class="field__error" role="alert"></p>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="f-category">Category</label>
+            <input id="f-category" type="text" list="category-list" autocomplete="off" required aria-describedby="e-category" />
+            <datalist id="category-list"></datalist>
+            <p id="e-category" class="field__error" role="alert"></p>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" id="form-submit" class="btn btn--primary">Add entry</button>
+            <button type="button" id="form-cancel" class="btn btn--ghost">Cancel</button>
+            <p id="form-status" class="field__error" role="status" aria-live="polite"></p>
+          </div>
+        </form>
+      </section>
+
+      <!-- SETTINGS -->
+      <section id="settings" class="section" aria-labelledby="settings-h" hidden>
+        <h2 id="settings-h" tabindex="-1">Settings</h2>
+
+        <article class="panel">
+          <h3>Categories</h3>
+          <ul id="cat-list" class="chips"></ul>
+          <div class="field-row field-row--end">
+            <div class="field field--grow">
+              <label for="cat-new">New category</label>
+              <input id="cat-new" type="text" autocomplete="off" aria-describedby="cat-error" />
+              <p id="cat-error" class="field__error" role="alert"></p>
+            </div>
+            <button id="cat-add" class="btn btn--primary" type="button">Add category</button>
+          </div>
+        </article>
+
+        <article class="panel">
+          <h3>Currency</h3>
+          <div class="field-row">
+            <div class="field">
+              <label for="base-currency">Base currency</label>
+              <select id="base-currency"></select>
+            </div>
+            <div class="field">
+              <label for="display-currency">Display currency</label>
+              <select id="display-currency"></select>
+            </div>
+          </div>
+          <div id="rate-fields" class="field-row"></div>
+        </article>
+
+        <article class="panel">
+          <h3>Spending cap</h3>
+          <div class="field">
+            <label for="settings-cap">Monthly cap</label>
+            <input id="settings-cap" type="text" inputmode="decimal" class="num" />
+          </div>
+        </article>
+
+        <article class="panel">
+          <h3>Appearance</h3>
+          <button id="theme-toggle" class="btn btn--ghost" type="button" aria-pressed="false">Switch to dark</button>
+        </article>
+
+        <article class="panel">
+          <h3>Your data</h3>
+          <div class="data-actions">
+            <button id="export-btn" class="btn btn--ghost" type="button">Export JSON</button>
+            <label class="btn btn--ghost file-btn">
+              Import JSON
+              <input id="import-file" type="file" accept="application/json,.json" />
+            </label>
+            <button id="clear-btn" class="btn btn--danger-ghost" type="button">Clear all</button>
+          </div>
+          <p id="settings-status" class="field__note" role="status" aria-live="polite"></p>
+        </article>
+      </section>
+
+      <!-- ABOUT -->
+      <section id="about" class="section" aria-labelledby="about-h" hidden>
+        <h2 id="about-h" tabindex="-1">About</h2>
+        <article class="panel prose">
+          <p>Ledger is a small, fast expense tracker for students. Log what you spend, watch it against a cap you set, and find anything with regular-expression search. Your data stays in your browser — nothing is uploaded.</p>
+          <p>Built with semantic HTML, mobile-first CSS, and modular vanilla JavaScript. No frameworks.</p>
+          <h3>Contact</h3>
+          <ul>
+            <li>GitHub: <a href="https://github.com/c-chol1" target="_blank" rel="noopener">github.com/c-chol1</a></li>
+            <li>Email: <a href="mailto:c.chol1@alustudent.com">c.chol1@alustudent.com</a></li>
+          </ul>
+        </article>
+      </section>
+
+    </main>
+  </div>
+
+  <footer class="footer">
+    <p>Ledger · Student Finance Tracker · built with vanilla HTML, CSS &amp; JS</p>
+  </footer>
+
+  <!-- Global polite announcer (toasts) -->
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- Delete confirmation -->
+  <dialog id="confirm-dialog" class="dialog">
+    <form method="dialog" class="dialog__body">
+      <h2>Delete entry</h2>
+      <p id="confirm-text"></p>
+      <div class="dialog__actions">
+        <button id="confirm-no" class="btn btn--ghost" value="cancel">Keep it</button>
+        <button id="confirm-yes" class="btn btn--danger" value="confirm">Delete</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script type="module" src="scripts/main.js"></script>
+</body>
+</html>
