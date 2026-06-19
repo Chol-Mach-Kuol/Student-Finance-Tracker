@@ -177,6 +177,7 @@ I tried to make this genuinely usable without a mouse:
 Go to Settings → Your data → Import JSON and pick `seed.json`. It has 12 records across different categories so you can see the dashboard and chart working straight away.
 
 ---
+# The link the to the demo video https://youtu.be/JwFybruKFjo
 
 ## Author
 
